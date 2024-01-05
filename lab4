@@ -1,0 +1,106 @@
+from collections import defaultdict
+from typing import List, Dict
+
+
+class CondorcetSystem:
+    def __init__(self, vote_orders: List[List[str]]):
+        self.vote_orders = vote_orders
+        self.candidates = list(set(candidate for vote_order in vote_orders for candidate in vote_order))
+        self.candidate_pair_values = self.get_pair_values()
+
+    def get_pair_values(self) -> Dict[str, Dict[str, int]]:
+        candidate_pair_values = defaultdict(dict)
+        for first_candidate in self.candidates:
+            for second_candidate in self.candidates:
+                if first_candidate != second_candidate:
+                    candidate_pair_values[first_candidate][second_candidate] = self.get_pair_value(first_candidate, second_candidate)
+        return dict(candidate_pair_values)
+
+    def get_pair_value(self, first_candidate: str, second_candidate: str) -> int:
+        times_first_higher = 0
+        times_second_higher = 0
+
+        for vote_order in self.vote_orders:
+            try:
+                index_first = vote_order.index(first_candidate)
+                index_second = vote_order.index(second_candidate)
+                if index_first < index_second:
+                    times_first_higher += 1
+                else:
+                    times_second_higher += 1
+            except ValueError:
+                pass
+
+        return times_first_higher - times_second_higher
+
+    def wins(self, candidate: str) -> bool:
+        return all(pair_difference > 0 for pair_difference in self.candidate_pair_values[candidate].values())
+
+    def get_matrix_line(self, first_candidate: str) -> str:
+        matrix_line = f"{first_candidate: <30}"
+        matrix_line += " ".join(f"{self.get_matrix_pair_value(first_candidate, second_candidate): >5}" for second_candidate in self.candidates)
+        return matrix_line
+
+    def get_matrix_pair_value(self, first_candidate: str, second_candidate: str) -> int:
+        value = self.candidate_pair_values[first_candidate].get(second_candidate, 0)
+        return value
+
+    def __str__(self) -> str:
+        winners = [candidate for candidate in self.candidates if self.wins(candidate)]
+        if len(winners) != 1:
+            return "Невозможно определить победителя, так как некоторые автомобили не имеют данных для сравнения с другими."
+
+        winner = winners[0]
+        result = f"Самый безопасный автомобиль: {winner}\n"
+        result += "Матрица попарного предпочтения:\n"
+        result += "\n".join(self.get_matrix_line(candidate) for candidate in self.candidates)
+        return result
+
+
+# Оценки безопасности автомобилей
+car_safety_ratings = {
+    "Lexus NX": [91, 87],
+    "Mercedes-Benz C-Class": [93, 89],
+    "Cupra Born": [93, 89],
+    "Volvo XC40": [97, 87],
+    "Kia EV6": [90, 87],
+    "Volkswagen Multivan": [90, 89],
+    "Volkswagen Polo": [94, 80],
+    "Volkswagen Tiago": [94, 84],
+    "Jeep Grand Cherokee": [84, 89],
+    "Land Rover Discovery Sport": [84, 89],
+    "Lexus RX": [90, 87],
+    "MG4": [90, 85],
+    "Skoda Octavia": [89, 84],
+    "Hyundai Ioniq 6": [97, 87],
+    "Kia Sportage": [87, 86],
+    "Tesla Model S": [94, 91],
+    "BMW 2 Series Active Tourer": [84, 85],
+    "Mercedes-Benz EQE": [95, 91],
+    "Genesis GV60": [89, 87],
+    "Kia Niro": [91, 84],
+    "Polestar 2": [93, 89],
+    "Lucid Air": [90, 91],
+    "Ora Funkycat": [92, 83],
+    "Skoda Enyaq iV": [94, 89],
+    "Nissan Qashqai": [91, 91],
+    "Smart #1": [96, 89],
+    "BMW 3 Series": [97, 87],
+    "Tesla Model Y": [97, 87],
+    "Subaru Forester": [97, 91],
+    "Audi A1": [95, 85]
+}
+
+# Создание списка списков предпочтений на основе оценок безопасности
+vote_orders = []
+
+for car1, safety1 in car_safety_ratings.items():
+    order = []
+    for car2, safety2 in car_safety_ratings.items():
+        if safety1[0] > safety2[0] and safety1[1] > safety2[1]:
+            order.append(car2)
+    vote_orders.append(order)
+
+# Создание экземпляра класса CondorcetSystem и вывод результата
+condorcet_system = CondorcetSystem(vote_orders)
+print(condorcet_system)
