@@ -1,0 +1,80 @@
+import tkinter as tk
+from lab4 import CondorcetSystem
+
+class MainForm(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Main Form")
+
+        self.button_add_votes = tk.Button(self, text="Добавить", command=self.add_votes)
+        self.button_add_votes.pack()
+
+        self.button_remove_votes = tk.Button(self, text="Удалить", command=self.remove_votes)
+        self.button_remove_votes.pack()
+
+        self.button_submit = tk.Button(self, text="Подсчет", command=self.evaluate_votes)
+        self.button_submit.pack()
+
+        self.text_box = tk.Text(self)
+        self.text_box.pack()
+
+        self.candidates = [
+            'Lexus NX', 'Mercedes-Benz C-Class', 'Cupra Born', 'Volvo XC40', 'Kia EV6', 'Volkswagen Multivan',
+            'Volkswagen Polo', 'Volkswagen Tiago', 'Jeep Grand Cherokee', 'Land Rover Discovery Sport', 'Lexus RX',
+            'MG4', 'Skoda Octavia', 'Hyundai Ioniq 6', 'Kia Sportage', 'Tesla Model S', 'BMW 2 Series Active Tourer',
+            'Mercedes-Benz EQE', 'Genesis GV60', 'Kia Niro', 'Polestar 2', 'Lucid Air', 'Ora Funkycat',
+            'Skoda Enyaq iV', 'Nissan Qashqai', 'Smart #1', 'BMW 3 Series', 'Tesla Model Y', 'Subaru Forester',
+            'Audi A1'
+        ]
+
+        self.plurality_controls = []
+        self.vote_order_controls = {
+            "Condorcet": [],
+            "Copeland": [],
+            "Simpson": [],
+            "Borda": []
+        }
+
+        self.vote_orders = []
+
+    def add_votes(self):
+        candidate_frame = tk.Frame(self)
+        candidate_frame.pack()
+
+        label = tk.Label(candidate_frame, text="Выберите порядок для кандидата:")
+        label.pack()
+
+        for key in self.vote_order_controls:
+            combo = tk.Listbox(candidate_frame, selectmode=tk.MULTIPLE)
+            for candidate in self.candidates:
+                combo.insert(tk.END, candidate)
+            combo.pack()
+            self.vote_order_controls[key].append(combo)
+
+        self.plurality_controls.append(candidate_frame)
+
+    def remove_votes(self):
+        if self.plurality_controls:
+            control = self.plurality_controls.pop()
+            control.destroy()
+            for key in self.vote_order_controls:
+                self.vote_order_controls[key].pop()
+
+    def evaluate_votes(self):
+        self.vote_orders = []
+        for key in self.vote_order_controls:
+            order = [self.candidates[i] for i in self.vote_order_controls[key][0].curselection()]
+            self.vote_orders.append(order)
+
+        try:
+            condorcet_system = CondorcetSystem(self.vote_orders)
+            result = str(condorcet_system)
+        except Exception as e:
+            result = f"Невозможно определить победителя: {str(e)}"
+
+        self.text_box.delete(1.0, tk.END)
+        self.text_box.insert(tk.END, result)
+
+if __name__ == "__main__":
+    app = MainForm()
+    app.mainloop()
